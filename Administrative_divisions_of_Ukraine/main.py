@@ -1,53 +1,194 @@
 import turtle
-import pandas
-from labels import labels
+from tkinter import ttk
+from regions_class import Regions
+from game_captions import GameCaptions
+import tkinter
 
-PREFERRED_LANGUAGE = ""
+from random import choice
+
+LVL ="easy"
+mouse_screen_click_flag = True
+
+captures = GameCaptions()
+regions_of_ua = Regions()
+
 screen = turtle.Screen()
 screen.setup(1290, 890)
-# Choose the language
-while not PREFERRED_LANGUAGE:
-    chosen_language = screen.textinput("Choose preferred language:", prompt="Enter 'UA' to play in Ukrainian, or 'EN' to play in English.").lower()
-    if chosen_language == "ua" or chosen_language == "en":
-        PREFERRED_LANGUAGE = labels[chosen_language]
 
-screen.title(PREFERRED_LANGUAGE["screen_title"])
-screen.screensize(1290,890)
-screen.bgcolor("black")
-image = "clear_images/region_clear.gif"
-screen.addshape(image)
-turtle.shape(image)
+tkinter_canvas = screen.getcanvas()
+tkinter_root = tkinter_canvas.winfo_toplevel()
+entry_field_variable = tkinter.StringVar()
 
-#create new Turtle() object for caption
-captures = turtle.Turtle()
-captures.hideturtle()
-captures.penup()
 
-# Take data from file
-states_data = pandas.read_csv("ua_oblasts.csv")
-##create the list with  all states
-divisions_list = states_data[PREFERRED_LANGUAGE["division_name"]].tolist()
-turtle_list = []
+def load_progress():
+    captures.chosen_language = "en"
+    captures.change_language(captures.chosen_language)
+    screen.title(captures.chosen_language_labels["screen_title"])
+    image = "clear_images/region_clear.gif"
+    screen.addshape(image)
+    turtle.hideturtle()
+    turtle.shape(image)
 
-guessed_divisions = []
+    for file in range(25):
+        file_path = "clear_images/" + str(file) + ".gif"
+        screen.addshape(file_path)
+        progress.step()
 
-while len(guessed_divisions) < 25:
-    answer_state = screen.textinput(f"{len(guessed_divisions)}/{len(divisions_list)} {PREFERRED_LANGUAGE["screen_textinput_title"]}",
-                                    prompt=PREFERRED_LANGUAGE["screen_textinput_prompt"]).title()
-    if answer_state == PREFERRED_LANGUAGE["phrase_to_finish_the_game"]:
-        break
-    if answer_state in divisions_list:
-        div_image = "clear_images/" + str(divisions_list.index(answer_state)) + ".gif"
-        screen.addshape(div_image)
-        div_turtle = turtle.Turtle()
-        div_turtle.shape(div_image)
-        turtle_list.append(div_turtle)
-        guessed_divisions.append(answer_state)
-        division = states_data[states_data[PREFERRED_LANGUAGE["division_name"]] == answer_state]
-        captures.goto(division["X"].item(), division["Y"].item())
-        captures.write(answer_state, align="center", font=("Arial", 12, "bold"))
+    regions_of_ua.create_region_list(captures.dict_of_regions_position)
+    progress.step(24)
 
-#save didn't guess divisions to learn.csv file
-to_learn_states = list(set(divisions_list) - set(guessed_divisions))
-dict_to_learn_states = {'states':list(set(divisions_list) - set(guessed_divisions))}
-pandas.DataFrame(dict_to_learn_states).to_csv("learn_states.csv")
+    progress.place_forget()
+    turtle.showturtle()
+
+# the progress bar
+progress = ttk.Progressbar(tkinter_root,length = 300,value=60, mode = 'determinate')
+progress.place(x=495, y=440)
+load_progress()
+
+lbl_to_entry_field_text = tkinter.StringVar()
+lbl_to_entry_field_text.set("Entry a region name:")
+lbl_to_entry_field = tkinter.Label(tkinter_root,textvariable=lbl_to_entry_field_text, bg="#ffffff",font=("Arial", 16, "bold"))
+lbl_to_entry_field.place(x=100, y=570)
+
+lbl_to_choose_difficulty_text = tkinter.StringVar()
+lbl_to_choose_difficulty_text.set("Choose difficulty:")
+lbl_to_choose_difficulty= tkinter.Label(tkinter_root,textvariable=lbl_to_choose_difficulty_text, bg="#ffffff",font=("Arial", 10))
+lbl_to_choose_difficulty.place(x=20, y=60)
+
+tkinter_entry_field = tkinter.Entry(tkinter_root,border=3, textvariable=entry_field_variable)
+tkinter_entry_field.place(x=100, y=600, width=250, height=30)
+tkinter_entry_field.config(state="disabled")
+
+selected_option = tkinter.StringVar(value="en")
+
+def show_selection():
+    captures.change_language(selected_option.get())
+    screen.title(captures.chosen_language_labels["screen_title"])
+    language_radio_btn_ua.config(state="disabled")
+    language_radio_btn_en.config(state="disabled")
+    print(selected_option.get())
+
+language_radio_btn_ua = tkinter.Radiobutton(tkinter_root, text="UA", bg="#ffffff", variable=selected_option, value="ua", command=show_selection)
+language_radio_btn_en = tkinter.Radiobutton(tkinter_root, text="EN", bg="#ffffff",variable=selected_option, value="en", command=show_selection)
+
+language_radio_btn_ua.place(x=20, y=20)
+language_radio_btn_en.place(x=70, y=20)
+
+
+def lvl_easy_entry_name_of_region(event=None):
+    regions_of_ua.player_answer = tkinter_entry_field.get().title()
+    entry_field_variable.set('')
+    if regions_of_ua.player_answer != "" and regions_of_ua.player_answer == captures.chosen_language_labels["phrase_to_finish_the_game"]:
+        print("The game is over")
+    if regions_of_ua.player_answer != "" and regions_of_ua.player_answer in captures.regions_names_list:
+        if captures.regions_names_list.index(regions_of_ua.player_answer) not in regions_of_ua.guessed_region_list:
+            regions_of_ua.show_region(captures.regions_names_list.index(regions_of_ua.player_answer))
+            captures.region_capture_writer(regions_of_ua.player_answer)
+            regions_of_ua.guessed_region_list.append(captures.regions_names_list.index(regions_of_ua.player_answer))
+        else:
+            print("the region is already guessed")
+    if len(regions_of_ua.guessed_region_list) == 25:
+        print("the game is over! You won!")
+
+
+def lvl_medium_entered_answer(event):
+    global mouse_screen_click_flag
+    regions_of_ua.player_answer = tkinter_entry_field.get().title()
+    if regions_of_ua.player_answer  and regions_of_ua.player_answer in captures.regions_names_list:
+        regions_of_ua.guessed_region_list.append(captures.regions_names_list.index(regions_of_ua.player_answer))
+        captures.region_capture_writer(regions_of_ua.player_answer)
+        mouse_screen_click_flag = True
+        entry_field_variable.set('')
+        tkinter_entry_field.config(state="disabled")
+    else:
+        print("Wrong answer")
+        entry_field_variable.set('')
+
+def lvl_medium_entry_name_of_chosen_region(x,y):
+    global mouse_screen_click_flag
+    if mouse_screen_click_flag and len(regions_of_ua.guessed_region_list)<=24:
+        if regions_of_ua.count_distans_from_click_to_center_of_region(x,y):
+            tkinter_entry_field.config(state="normal")
+            tkinter_entry_field.focus()
+            mouse_screen_click_flag = False
+
+
+
+def lvl_hard_show_ramdom_chosen_region():
+    print(regions_of_ua.guessed_region_list)
+    if regions_of_ua.lvl_hard_random_chosen_region == '' or regions_of_ua.player_answer == regions_of_ua.lvl_hard_random_chosen_region:
+        if len(regions_of_ua.guessed_region_list) <=24:
+            regions_of_ua.lvl_hard_random_chosen_region = choice(captures.regions_names_list)
+            while captures.regions_names_list.index(regions_of_ua.lvl_hard_random_chosen_region) in regions_of_ua.guessed_region_list:
+                regions_of_ua.lvl_hard_random_chosen_region = choice(captures.regions_names_list)
+        regions_of_ua.show_region(captures.regions_names_list.index(regions_of_ua.lvl_hard_random_chosen_region))
+
+def lvl_hard_check_answer(event=None):
+    regions_of_ua.player_answer= tkinter_entry_field.get().title()
+    if len(regions_of_ua.guessed_region_list) <= 24:
+        if regions_of_ua.player_answer and regions_of_ua.player_answer == regions_of_ua.lvl_hard_random_chosen_region:
+            captures.region_capture_writer(regions_of_ua.lvl_hard_random_chosen_region)
+            regions_of_ua.guessed_region_list.append(captures.regions_names_list.index(regions_of_ua.player_answer))
+            lvl_hard_show_ramdom_chosen_region()
+        else:
+            print("wrong answer")
+    else:
+        print("You won!")
+        tkinter_entry_field.config(state="disabled")
+    entry_field_variable.set('')
+
+def lvl_easy():
+    captures.clear_region_caption()
+    regions_of_ua.clean_all_region()
+    tkinter_entry_field.bind("<Return>", lvl_easy_entry_name_of_region)
+    tkinter_entry_field.config(state="normal")
+    tkinter_entry_field.focus()
+
+
+def lvl_medium():
+    captures.clear_region_caption()
+    regions_of_ua.clean_all_region()
+    tkinter_entry_field.bind("<Return>", lvl_medium_entered_answer)
+    screen.onclick(lvl_medium_entry_name_of_chosen_region, btn=1)
+
+
+def lvl_hard():
+    captures.clear_region_caption()
+    regions_of_ua.clean_all_region()
+    tkinter_entry_field.bind("<Return>", lvl_hard_check_answer)
+    tkinter_entry_field.config(state="normal")
+    tkinter_entry_field.focus()
+    lvl_hard_show_ramdom_chosen_region()
+
+def set_lvl_for_game():
+    global LVL
+    LVL = selected_difficult.get()
+    print(LVL)
+    if LVL == "easy":
+        lvl_easy()
+    if LVL == "medium":
+        lvl_medium()
+    elif LVL == "hard":
+        lvl_hard()
+    elif LVL == "":
+        print("You didn't choose anything")
+
+selected_difficult = tkinter.StringVar(value="easy")
+difficult_change_radio_btn_easy = tkinter.Radiobutton(tkinter_root, text="easy", bg="#ffffff", variable=selected_difficult, value="easy", command=set_lvl_for_game)
+difficult_change_radio_btn_medium = tkinter.Radiobutton(tkinter_root, text="medium", bg="#ffffff",variable=selected_difficult, value="medium", command=set_lvl_for_game)
+difficult_change_radio_btn_hard = tkinter.Radiobutton(tkinter_root, text="hard", bg="#ffffff",variable=selected_difficult, value="hard", command=set_lvl_for_game)
+
+difficult_change_radio_btn_easy.place(x=20, y=80)
+difficult_change_radio_btn_medium.place(x=20, y=100)
+difficult_change_radio_btn_hard.place(x=20, y=120)
+
+
+if LVL == "easy":
+    lvl_easy()
+if LVL == "medium":
+    lvl_medium()
+elif LVL == "hard":
+    lvl_hard()
+elif LVL == "":
+    print("You didn't enter anything")
+turtle.mainloop()
