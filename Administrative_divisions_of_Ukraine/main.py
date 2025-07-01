@@ -46,13 +46,19 @@ progress.place(x=495, y=440)
 load_progress()
 
 lbl_to_entry_field_text = tkinter.StringVar()
-lbl_to_entry_field_text.set("Entry a region name:")
-lbl_to_entry_field = tkinter.Label(tkinter_root,textvariable=lbl_to_entry_field_text, bg="#ffffff",font=("Arial", 16, "bold"))
+lbl_to_entry_field_text.set(captures.chosen_language_labels["lbl_to_entry_field_text"])
+lbl_to_entry_field = tkinter.Label(tkinter_root,
+                                   textvariable=lbl_to_entry_field_text,
+                                   bg="#ffffff",
+                                   font=("Arial", 16, "bold"))
 lbl_to_entry_field.place(x=100, y=570)
 
 lbl_to_choose_difficulty_text = tkinter.StringVar()
-lbl_to_choose_difficulty_text.set("Choose difficulty:")
-lbl_to_choose_difficulty= tkinter.Label(tkinter_root,textvariable=lbl_to_choose_difficulty_text, bg="#ffffff",font=("Arial", 10))
+lbl_to_choose_difficulty_text.set(captures.chosen_language_labels["lbl_to_choose_difficulty_text"])
+lbl_to_choose_difficulty= tkinter.Label(tkinter_root,
+                                    textvariable=lbl_to_choose_difficulty_text,
+                                    bg="#ffffff",
+                                    font=("Arial", 10))
 lbl_to_choose_difficulty.place(x=20, y=60)
 
 tkinter_entry_field = tkinter.Entry(tkinter_root,border=3, textvariable=entry_field_variable)
@@ -62,14 +68,32 @@ tkinter_entry_field.config(state="disabled")
 selected_option = tkinter.StringVar(value="en")
 
 def show_selection():
+    #print(regions_of_ua.guessed_region_list)
+    captures.clear_region_caption()
+    #regions_of_ua.clean_all_region()
     captures.change_language(selected_option.get())
     screen.title(captures.chosen_language_labels["screen_title"])
-    language_radio_btn_ua.config(state="disabled")
-    language_radio_btn_en.config(state="disabled")
-    print(selected_option.get())
+    lbl_to_entry_field_text.set(captures.chosen_language_labels["lbl_to_entry_field_text"])
+    lbl_to_choose_difficulty_text.set(captures.chosen_language_labels["lbl_to_choose_difficulty_text"])
+    difficult_change_radio_btn_easy.config(text=captures.chosen_language_labels["easy"])
+    difficult_change_radio_btn_medium.config(text=captures.chosen_language_labels["medium"])
+    difficult_change_radio_btn_hard.config(text=captures.chosen_language_labels["hard"])
+    for region in regions_of_ua.guessed_region_list:
+        captures.region_capture_writer(captures.regions_names_list[region])
 
-language_radio_btn_ua = tkinter.Radiobutton(tkinter_root, text="UA", bg="#ffffff", variable=selected_option, value="ua", command=show_selection)
-language_radio_btn_en = tkinter.Radiobutton(tkinter_root, text="EN", bg="#ffffff",variable=selected_option, value="en", command=show_selection)
+
+language_radio_btn_ua = tkinter.Radiobutton(tkinter_root,
+                                            text="UA",
+                                            bg="#ffffff",
+                                            variable=selected_option,
+                                            value="ua",
+                                            command=show_selection)
+language_radio_btn_en = tkinter.Radiobutton(tkinter_root,
+                                            text="EN",
+                                            bg="#ffffff",
+                                            variable=selected_option,
+                                            value="en",
+                                            command=show_selection)
 
 language_radio_btn_ua.place(x=20, y=20)
 language_radio_btn_en.place(x=70, y=20)
@@ -138,23 +162,17 @@ def lvl_hard_check_answer(event=None):
     entry_field_variable.set('')
 
 def lvl_easy():
-    captures.clear_region_caption()
-    regions_of_ua.clean_all_region()
     tkinter_entry_field.bind("<Return>", lvl_easy_entry_name_of_region)
     tkinter_entry_field.config(state="normal")
     tkinter_entry_field.focus()
 
 
 def lvl_medium():
-    captures.clear_region_caption()
-    regions_of_ua.clean_all_region()
     tkinter_entry_field.bind("<Return>", lvl_medium_entered_answer)
     screen.onclick(lvl_medium_entry_name_of_chosen_region, btn=1)
 
 
 def lvl_hard():
-    captures.clear_region_caption()
-    regions_of_ua.clean_all_region()
     tkinter_entry_field.bind("<Return>", lvl_hard_check_answer)
     tkinter_entry_field.config(state="normal")
     tkinter_entry_field.focus()
@@ -163,20 +181,35 @@ def lvl_hard():
 def set_lvl_for_game():
     global LVL
     LVL = selected_difficult.get()
-    print(LVL)
+    tkinter_entry_field.config(state="disabled")
+    captures.clear_region_caption()
+    regions_of_ua.clean_all_region()
+
+    #print(LVL)
     if LVL == "easy":
         lvl_easy()
     if LVL == "medium":
         lvl_medium()
     elif LVL == "hard":
         lvl_hard()
-    elif LVL == "":
-        print("You didn't choose anything")
 
 selected_difficult = tkinter.StringVar(value="easy")
-difficult_change_radio_btn_easy = tkinter.Radiobutton(tkinter_root, text="easy", bg="#ffffff", variable=selected_difficult, value="easy", command=set_lvl_for_game)
-difficult_change_radio_btn_medium = tkinter.Radiobutton(tkinter_root, text="medium", bg="#ffffff",variable=selected_difficult, value="medium", command=set_lvl_for_game)
-difficult_change_radio_btn_hard = tkinter.Radiobutton(tkinter_root, text="hard", bg="#ffffff",variable=selected_difficult, value="hard", command=set_lvl_for_game)
+difficult_change_radio_btn_easy = tkinter.Radiobutton(tkinter_root,
+                                                        text=captures.chosen_language_labels["easy"],
+                                                        bg="#ffffff", variable=selected_difficult,
+                                                        value="easy",
+                                                        command=set_lvl_for_game)
+difficult_change_radio_btn_medium = tkinter.Radiobutton(tkinter_root,
+                                                        text=captures.chosen_language_labels["medium"],
+                                                        bg="#ffffff",variable=selected_difficult,
+                                                        value="medium",
+                                                        command=set_lvl_for_game)
+difficult_change_radio_btn_hard = tkinter.Radiobutton(tkinter_root,
+                                                        text= captures.chosen_language_labels["hard"],
+                                                        bg="#ffffff",
+                                                        variable=selected_difficult,
+                                                        value="hard",
+                                                        command=set_lvl_for_game)
 
 difficult_change_radio_btn_easy.place(x=20, y=80)
 difficult_change_radio_btn_medium.place(x=20, y=100)
@@ -189,6 +222,5 @@ if LVL == "medium":
     lvl_medium()
 elif LVL == "hard":
     lvl_hard()
-elif LVL == "":
-    print("You didn't enter anything")
+    
 turtle.mainloop()
